@@ -1,0 +1,13 @@
+# Ignore folders
+PPT/
+Reference Papers/
+waste/
+
+
+# Optional (helpful ignores)
+*.zip
+*.rar
+*.pptx
+*.pdf
+*.xlsx
+.DS_Store
