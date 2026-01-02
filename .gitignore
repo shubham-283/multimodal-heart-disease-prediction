@@ -16,3 +16,9 @@ Datasets - text/
 *.cbm
 *.pkl
 *.h5
+*.env
+
+# Environment variables
+.env
+frontend/.env
+backend/.env
