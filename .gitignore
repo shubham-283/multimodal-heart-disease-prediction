@@ -22,3 +22,8 @@ Datasets - text/
 .env
 frontend/.env
 backend/.env
+__pycache__/
+*.ipynb_checkpoints/
+backend/**/__pycache__/
+
+IPYNB files/
