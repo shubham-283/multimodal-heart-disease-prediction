@@ -1,13 +1,18 @@
-# Ignore folders
 PPT/
 Reference Papers/
 waste/
+Datasets - image/
+Datasets - text/
 
 
-# Optional (helpful ignores)
 *.zip
 *.rar
 *.pptx
 *.pdf
 *.xlsx
 .DS_Store
+*.pth
+*.pt
+*.cbm
+*.pkl
+*.h5
