@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Activity, Upload, FileText, Database, Zap, AlertCircle, Download, ChevronRight, Info, CheckCircle, BarChart3 } from 'lucide-react';
+import { saveReportSection } from "../../utils/reportStore";
+import { fileOrBlobToBase64 } from "../../utils/imageToBase64";
+import { Activity, Upload, FileText, Database, Zap, AlertCircle, Download, BarChart3 } from 'lucide-react';
 
 const ECGPredictionForm = () => {
   const [recordHea, setRecordHea] = useState(null);
@@ -9,6 +11,7 @@ const ECGPredictionForm = () => {
   const [diagnostics, setDiagnostics] = useState({ label: null, probabilities: {} });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+
 
   const CLASS_COLORS = {
     "MI": "bg-red-600 border-red-700 text-white",
@@ -69,7 +72,15 @@ const ECGPredictionForm = () => {
 
       setDiagnostics({ label, probabilities: probs });
       const imageBlob = await response.blob();
-      setPredictionImage(URL.createObjectURL(imageBlob));
+      const base64Image = await fileOrBlobToBase64(imageBlob);
+      setPredictionImage(base64Image);
+
+      saveReportSection("ecg", {
+        lead,
+        label,
+        probabilities: probs,
+        image: base64Image
+      });
     } catch (err) {
       setError(err.message);
     } finally {
@@ -77,15 +88,17 @@ const ECGPredictionForm = () => {
     }
   };
 
+
+
   return (
     <div className="min-h-screen p-4 font-sans bg-slate-50 text-slate-900 md:p-8">
       <div className="mx-auto space-y-6 max-w-7xl">
-        
+
 
         {/* SECTION 1: CONFIGURATION (COMPACT FOOTER) */}
         <section className="bg-white border border-slate-200 rounded-[2rem] p-8 shadow-sm">
           <form onSubmit={handleSubmit} className="grid items-end grid-cols-1 gap-10 lg:grid-cols-12">
-            
+
             <div className="space-y-4 lg:col-span-3">
               <label className="flex items-center gap-2 text-xs font-black tracking-widest uppercase text-slate-400">
                 <Upload className="w-4 h-4" /> 1. Upload Binary Pair
@@ -125,7 +138,7 @@ const ECGPredictionForm = () => {
           </form>
         </section>
 
-        
+
         {/* SECTION 2: VISUALIZATION (MAXIMIZED) */}
         <section className="bg-white border border-slate-200 rounded-[2rem] shadow-xl overflow-hidden min-h-[500px] flex flex-col">
           <div className="flex items-center justify-between px-8 py-5 bg-white border-b border-slate-100">
@@ -159,7 +172,7 @@ const ECGPredictionForm = () => {
                 <div className="bg-white p-3 border border-slate-200 shadow-2xl rounded-[1.5rem] w-full">
                   <img src={predictionImage} alt="ECG Plot" className="object-contain w-full h-auto rounded-lg" />
                 </div>
-                
+
                 {/* Compact Results Bar directly under Image */}
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 bg-white p-8 rounded-[1.5rem] border border-slate-200 shadow-sm">
                   <div className={`lg:col-span-3 p-6 rounded-2xl border-2 flex flex-col items-center justify-center text-center ${CLASS_COLORS[diagnostics.label] || 'bg-slate-100'}`}>
@@ -204,12 +217,6 @@ const ECGPredictionForm = () => {
             <AlertCircle className="flex-shrink-0 w-5 h-5" /> Error: {error}
           </div>
         )}
-
-        <footer className="pb-10 text-center">
-          <div className="inline-flex items-center gap-2 px-6 py-2 bg-slate-100 rounded-full text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-            <Info className="w-4 h-4" /> HIPAA COMPLIANT // RESEARCH INTERFACE V2.4
-          </div>
-        </footer>
       </div>
     </div>
   );
