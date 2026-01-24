@@ -1,8 +1,11 @@
 import React, { useState, useMemo } from 'react';
-import { 
-  Activity, Heart, User, Ruler, Scale, 
-  Droplets, Thermometer, Zap, AlertCircle, 
-  CheckCircle, Info, TrendingUp, ShieldCheck, ArrowRight
+import { saveReportSection } from "../../utils/reportStore";
+import { FEATURE_LABEL_MAP } from "../../utils/featureLabelMap";
+import { FEATURE_DESCRIPTION_MAP } from "../../utils/featureDescriptionMap";
+import {
+  User, Ruler, Scale,
+  Droplets, AlertCircle,
+  CheckCircle, Info, TrendingUp, ShieldCheck
 } from 'lucide-react';
 
 const HeartDiseaseForm = () => {
@@ -26,8 +29,8 @@ const HeartDiseaseForm = () => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    const numericValue = (name === 'age' || name === 'weight' || name === 'height' || name === 'ap_hi' || name === 'ap_lo') 
-      ? (value === "" ? "" : parseFloat(value)) 
+    const numericValue = (name === 'age' || name === 'weight' || name === 'height' || name === 'ap_hi' || name === 'ap_lo')
+      ? (value === "" ? "" : parseFloat(value))
       : parseInt(value, 10);
 
     setFormData(prev => ({ ...prev, [name]: numericValue }));
@@ -50,7 +53,7 @@ const HeartDiseaseForm = () => {
 
     setLoading(true);
     const baseUri = process.env.REACT_APP_API_URI || 'http://localhost:5000';
-    
+
     try {
       const response = await fetch(`${baseUri}/predict-clinical`, {
         method: 'POST',
@@ -60,6 +63,16 @@ const HeartDiseaseForm = () => {
       if (!response.ok) throw new Error("API Connection Failed.");
       const data = await response.json();
       setResult(data);
+
+      saveReportSection("clinical", {
+        prediction: data.prediction,
+        label: data.label,
+        probability: data.probability,
+        bmi,
+        riskFactors: data.explanations.top_risk_factors,
+        protectiveFactors: data.explanations.top_protective_factors
+      });
+
     } catch (err) {
       setError(err.message);
     } finally {
@@ -67,27 +80,27 @@ const HeartDiseaseForm = () => {
     }
   };
 
+  const normalizeFeature = (item) => {
+    const label = FEATURE_LABEL_MAP[item.feature] || item.feature;
+
+    return {
+      ...item,
+      label,
+      description: FEATURE_DESCRIPTION_MAP[label] || "",
+      magnitude: Math.min(Math.abs(item.impact) * 100, 100)
+    };
+  };
+
+
+
   return (
     <div className="min-h-screen p-4 font-sans bg-slate-50 md:p-12">
       <div className="max-w-4xl mx-auto overflow-hidden bg-white border shadow-2xl rounded-3xl border-slate-200">
-        
-        {/* Header */}
-        <div className="p-8 text-white bg-gradient-to-r from-blue-700 to-indigo-800">
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="flex items-center gap-3 text-3xl italic font-extrabold tracking-tight">
-                <Heart className="text-red-400 fill-current animate-pulse" />
-                CARDIO-EXPLAINER <span className="font-light opacity-50">v2.0</span>
-              </h2>
-              <p className="mt-2 text-blue-100 opacity-80 uppercase text-[10px] font-bold tracking-[0.2em]">Explainable AI Diagnostic Engine</p>
-            </div>
-          </div>
-        </div>
 
         <form onSubmit={handleSubmit} className="p-8 border-b border-slate-100">
           <div className="grid grid-cols-1 gap-10 md:grid-cols-2">
             <div className="space-y-6">
-              <h3 className="flex items-center gap-2 pb-2 text-sm text-lg font-bold tracking-wider uppercase border-b text-slate-800 border-slate-100">
+              <h3 className="flex items-center gap-2 pb-2 text-lg font-bold tracking-wider uppercase border-b text-slate-800 border-slate-100">
                 <User size={18} className="text-blue-600" /> Biometric Input
               </h3>
               <div className="grid grid-cols-2 gap-4">
@@ -106,11 +119,11 @@ const HeartDiseaseForm = () => {
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1">
-                  <label className="flex items-center gap-1 ml-1 text-xs font-bold text-slate-500"><Ruler size={14}/> Height (cm)</label>
+                  <label className="flex items-center gap-1 ml-1 text-xs font-bold text-slate-500"><Ruler size={14} /> Height (cm)</label>
                   <input type="number" name="height" placeholder="170" value={formData.height} onChange={handleChange} className="w-full p-3 border outline-none border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500" required />
                 </div>
                 <div className="space-y-1">
-                  <label className="flex items-center gap-1 ml-1 text-xs font-bold text-slate-500"><Scale size={14}/> Weight (kg)</label>
+                  <label className="flex items-center gap-1 ml-1 text-xs font-bold text-slate-500"><Scale size={14} /> Weight (kg)</label>
                   <input type="number" name="weight" placeholder="75" value={formData.weight} onChange={handleChange} className="w-full p-3 border outline-none border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500" required />
                 </div>
               </div>
@@ -128,7 +141,7 @@ const HeartDiseaseForm = () => {
             </div>
 
             <div className="space-y-6">
-              <h3 className="flex items-center gap-2 pb-2 text-sm text-lg font-bold tracking-wider uppercase border-b text-slate-800 border-slate-100">
+              <h3 className="flex items-center gap-2 pb-2 text-lg font-bold tracking-wider uppercase border-b text-slate-800 border-slate-100">
                 <Droplets size={18} className="text-blue-600" /> Lab Markers
               </h3>
               <div className="space-y-4">
@@ -145,15 +158,15 @@ const HeartDiseaseForm = () => {
               </div>
 
               <div className="p-4 space-y-4 border bg-slate-50 rounded-2xl border-slate-100">
-                 <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Behavioral State</p>
-                 <div className="grid grid-cols-3 gap-3">
-                    {['smoke', 'alco', 'active'].map(field => (
-                      <button key={field} type="button" onClick={() => setFormData(f => ({...f, [field]: f[field] ? 0 : 1}))} 
-                        className={`py-2 rounded-lg text-[10px] font-bold transition-all border ${formData[field] ? 'bg-blue-600 text-white border-blue-700 shadow-md' : 'bg-white text-slate-400 border-slate-200'}`}>
-                        {field.toUpperCase()}
-                      </button>
-                    ))}
-                 </div>
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Behavioral State</p>
+                <div className="grid grid-cols-3 gap-3">
+                  {['smoke', 'alco', 'active'].map(field => (
+                    <button key={field} type="button" onClick={() => setFormData(f => ({ ...f, [field]: f[field] ? 0 : 1 }))}
+                      className={`py-2 rounded-lg text-[10px] font-bold transition-all border ${formData[field] ? 'bg-blue-600 text-white border-blue-700 shadow-md' : 'bg-white text-slate-400 border-slate-200'}`}>
+                      {field.toUpperCase()}
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
           </div>
@@ -163,75 +176,127 @@ const HeartDiseaseForm = () => {
           </button>
         </form>
 
-        {/* redesigned Explainable Result Section */}
-        {result && (
-          <div className="p-8 space-y-8 duration-700 animate-in fade-in slide-in-from-bottom-4">
-            {/* Top Score Card */}
-            <div className={`p-8 rounded-[2rem] border flex flex-col md:flex-row items-center justify-between gap-6 ${result.prediction === 1 ? 'bg-red-50 border-red-100' : 'bg-emerald-50 border-emerald-100'}`}>
-              <div className="flex items-center gap-6">
-                <div className={`p-5 rounded-3xl shadow-lg ${result.prediction === 1 ? 'bg-red-500 text-white shadow-red-200' : 'bg-emerald-500 text-white shadow-emerald-200'}`}>
-                  {result.prediction === 1 ? <AlertCircle size={40} /> : <CheckCircle size={40} />}
-                </div>
-                <div>
-                  <span className={`text-[10px] font-black uppercase tracking-[0.2em] ${result.prediction === 1 ? 'text-red-500' : 'text-emerald-600'}`}>Model Assessment</span>
-                  <p className={`text-5xl font-black tracking-tighter ${result.prediction === 1 ? 'text-red-700' : 'text-emerald-800'}`}>{result.label}</p>
-                </div>
-              </div>
-              <div className="bg-white/60 backdrop-blur p-6 rounded-3xl border border-white min-w-[180px] text-center shadow-sm">
-                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Confidence</p>
-                <p className="text-4xl font-black text-slate-800">{(result.probability * 100).toFixed(1)}%</p>
-              </div>
-            </div>
-
-            {/* Explanations Grid */}
-            <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
-              {/* Risk Factors */}
-              <div className="space-y-4">
-                <h4 className="flex items-center gap-2 text-sm font-black tracking-widest text-red-600 uppercase">
-                  <TrendingUp size={16} /> Top Risk Factors
-                </h4>
-                <div className="space-y-3">
-                  {result.explanations.top_risk_factors.map((item, idx) => (
-                    <div key={idx} className="p-4 space-y-2 bg-white border shadow-sm rounded-2xl border-slate-100">
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs font-bold uppercase text-slate-700">{item.feature.replace('_', ' ')}</span>
-                        <span className="text-[10px] font-bold text-red-500">+{item.impact.toFixed(3)}</span>
-                      </div>
-                      <div className="w-full bg-slate-100 h-1.5 rounded-full">
-                        <div className="h-full bg-red-500 rounded-full" style={{ width: `${Math.min(Math.abs(item.impact) * 100, 100)}%` }} />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Protective Factors */}
-              <div className="space-y-4">
-                <h4 className="flex items-center gap-2 text-sm font-black tracking-widest uppercase text-emerald-600">
-                  <ShieldCheck size={16} /> Protective Factors
-                </h4>
-                <div className="space-y-3">
-                  {result.explanations.top_protective_factors.map((item, idx) => (
-                    <div key={idx} className="p-4 space-y-2 bg-white border shadow-sm rounded-2xl border-slate-100">
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs font-bold uppercase text-slate-700">{item.feature.replace('_', ' ')}</span>
-                        <span className="text-[10px] font-bold text-emerald-500">{item.impact.toFixed(3)}</span>
-                      </div>
-                      <div className="w-full bg-slate-100 h-1.5 rounded-full">
-                        <div className="h-full rounded-full bg-emerald-500" style={{ width: `${Math.min(Math.abs(item.impact) * 100, 100)}%` }} />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            <div className="p-4 bg-slate-900 rounded-2xl flex items-center gap-3 text-slate-400 text-[10px] uppercase font-bold tracking-widest">
-              <Info size={14} className="text-blue-400" />
-              This diagnostic report uses SHAP values to explain feature influence on heart health.
-            </div>
+        {/* Error Display */}
+        {error && (
+          <div className="p-4 mx-8 mt-4 bg-red-50 border border-red-200 rounded-xl">
+            <p className="text-sm text-red-600 font-semibold">{error}</p>
           </div>
         )}
+
+        {/* Explainable Result Section */}
+        {result && (() => {
+          const riskFactors = result.explanations.top_risk_factors.map(normalizeFeature);
+          const protectiveFactors = result.explanations.top_protective_factors.map(normalizeFeature);
+
+          return (
+            <div className="p-8 space-y-8 duration-700 animate-in fade-in slide-in-from-bottom-4">
+              {/* Top Score Card */}
+              <div className={`p-8 rounded-[2rem] border flex flex-col md:flex-row items-center justify-between gap-6 ${result.prediction === 1 ? 'bg-red-50 border-red-100' : 'bg-emerald-50 border-emerald-100'}`}>
+                <div className="flex items-center gap-6">
+                  <div className={`p-5 rounded-3xl shadow-lg ${result.prediction === 1 ? 'bg-red-500 text-white shadow-red-200' : 'bg-emerald-500 text-white shadow-emerald-200'}`}>
+                    {result.prediction === 1 ? <AlertCircle size={40} /> : <CheckCircle size={40} />}
+                  </div>
+                  <div>
+                    <span className={`text-[10px] font-black uppercase tracking-[0.2em] ${result.prediction === 1 ? 'text-red-500' : 'text-emerald-600'}`}>Model Assessment</span>
+                    <p className={`text-5xl font-black tracking-tighter ${result.prediction === 1 ? 'text-red-700' : 'text-emerald-800'}`}>{result.label}</p>
+                  </div>
+                </div>
+                <div className="bg-white/60 backdrop-blur p-6 rounded-3xl border border-white min-w-[180px] text-center shadow-sm">
+                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Confidence</p>
+                  <p className="text-4xl font-black text-slate-800">{(result.probability * 100).toFixed(1)}%</p>
+                </div>
+              </div>
+
+              {/* Explanations Grid */}
+              <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
+                {/* Risk Factors */}
+                <div className="space-y-4">
+                  <h4 className="flex items-center gap-2 text-sm font-black tracking-widest text-red-600 uppercase">
+                    <TrendingUp size={16} /> Top Risk Factors
+                  </h4>
+                  <div className="space-y-3">
+                    {riskFactors.map((item, idx) => (
+                      <div key={idx} className="p-4 space-y-2 bg-white border shadow-sm rounded-2xl border-slate-100">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-1">
+                            <span className="text-xs font-bold uppercase text-slate-700">
+                              {item.label}
+                            </span>
+
+                            {item.description && (
+                              <span className="relative group cursor-pointer">
+                                <Info size={12} className="text-slate-400" />
+
+                                <div className="absolute left-1/2 top-full z-10 hidden w-56 -translate-x-1/2 rounded-lg bg-slate-900 p-2 text-[10px] text-white group-hover:block">
+                                  {item.description}
+                                </div>
+                              </span>
+                            )}
+                          </div>
+
+                          <span className="text-[10px] font-bold text-red-500">
+                            +{item.impact.toFixed(3)}
+                          </span>
+                        </div>
+                        <div className="w-full bg-slate-100 h-1.5 rounded-full">
+                          <div
+                            className="h-full bg-red-500 rounded-full"
+                            style={{ width: `${item.magnitude}%` }}
+                          />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Protective Factors */}
+                <div className="space-y-4">
+                  <h4 className="flex items-center gap-2 text-sm font-black tracking-widest uppercase text-emerald-600">
+                    <ShieldCheck size={16} /> Protective Factors
+                  </h4>
+                  <div className="space-y-3">
+                    {protectiveFactors.map((item, idx) => (
+                      <div key={idx} className="p-4 space-y-2 bg-white border shadow-sm rounded-2xl border-slate-100">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-1">
+                            <span className="text-xs font-bold uppercase text-slate-700">
+                              {item.label}
+                            </span>
+
+                            {item.description && (
+                              <span className="relative group cursor-pointer">
+                                <Info size={12} className="text-slate-400" />
+
+                                <div className="absolute left-1/2 top-full z-10 hidden w-56 -translate-x-1/2 rounded-lg bg-slate-900 p-2 text-[10px] text-white group-hover:block">
+                                  {item.description}
+                                </div>
+                              </span>
+                            )}
+                          </div>
+
+                          <span className="text-[10px] font-bold text-emerald-500">
+                            {item.impact.toFixed(3)}
+                          </span>
+                        </div>
+                        <div className="w-full bg-slate-100 h-1.5 rounded-full">
+                          <div
+                            className="h-full bg-emerald-500 rounded-full"
+                            style={{ width: `${item.magnitude}%` }}
+                          />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              <div className="p-4 bg-slate-900 rounded-2xl flex items-center gap-3 text-slate-400 text-[10px] uppercase font-bold tracking-widest">
+                <Info size={14} className="text-blue-400" />
+                This diagnostic report uses SHAP values to explain feature influence on heart health.
+              </div>
+            </div>
+          );
+        })()}
       </div>
     </div>
   );

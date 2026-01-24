@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { Heart, Activity, Stethoscope, ShieldCheck, ChevronRight, Menu, Settings } from 'lucide-react';
+import { Heart, Activity, Stethoscope, ShieldCheck, ChevronRight, Menu } from 'lucide-react';
 import HeartDiseaseForm from "./components/clinical/HeartDiseaseForm";
 import ECGPredictionForm from "./components/ecg/ECGPrediction";
 import ArcadeStenosis from "./components/stenosis/ArcadeStenosis";
+import FinalReport from "./components/report/FinalReport";
 
 function App() {
   const [activeTab, setActiveTab] = useState('clinical');
@@ -38,6 +39,16 @@ function App() {
       tagline: 'Vessel segmentation core',
       theme: 'text-emerald-600',
       bg: 'bg-emerald-50'
+    },
+    {
+      id: 'report',
+      name: 'Final Report',
+      fullTitle: 'Integrated Diagnostic Summary',
+      icon: ShieldCheck,
+      component: FinalReport,
+      tagline: 'Multi-modal risk fusion',
+      theme: 'text-rose-600',
+      bg: 'bg-rose-50'
     }
   ];
 
@@ -46,7 +57,7 @@ function App() {
 
   return (
     <div className="flex h-screen bg-[#FDFDFD] text-slate-900 font-sans antialiased overflow-hidden">
-      
+
       {/* Sidebar Navigation */}
       <aside className={`${isSidebarOpen ? 'w-72' : 'w-20'} transition-all duration-300 bg-white border-r border-slate-200 flex flex-col z-50`}>
         <div className="flex items-center gap-3 p-6">
@@ -64,11 +75,10 @@ function App() {
               <button
                 key={m.id}
                 onClick={() => setActiveTab(m.id)}
-                className={`w-full flex items-center gap-4 p-3 rounded-xl transition-all group ${
-                  isActive 
-                    ? `${m.bg} ${m.theme}` 
-                    : 'text-slate-400 hover:bg-slate-50 hover:text-slate-600'
-                }`}
+                className={`w-full flex items-center gap-4 p-3 rounded-xl transition-all group ${isActive
+                  ? `${m.bg} ${m.theme}`
+                  : 'text-slate-400 hover:bg-slate-50 hover:text-slate-600'
+                  }`}
               >
                 <Icon className={`w-6 h-6 shrink-0 ${isActive ? 'scale-110' : ''}`} />
                 {isSidebarOpen && (
@@ -84,18 +94,11 @@ function App() {
             );
           })}
         </nav>
-
-        <div className="p-4 border-t border-slate-100">
-          <div className={`flex items-center gap-3 p-3 rounded-xl bg-slate-50 border border-slate-100`}>
-            <ShieldCheck className="w-5 h-5 text-emerald-500 shrink-0" />
-            {isSidebarOpen && <span className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Clinical Protocol v2.6</span>}
-          </div>
-        </div>
       </aside>
 
       {/* Main Content Area */}
       <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
-        
+
         {/* Top Header */}
         <header className="flex items-center justify-between h-20 px-8 border-b bg-white/80 backdrop-blur-md border-slate-100 shrink-0">
           <div className="flex items-center gap-4">
@@ -108,16 +111,6 @@ function App() {
               <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">{currentModule.tagline}</p>
             </div>
           </div>
-          
-          <div className="flex items-center gap-6">
-            <div className="items-center hidden gap-2 sm:flex">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-              <span className="text-[10px] font-bold text-slate-500 uppercase tracking-tighter">GPU Engine Active</span>
-            </div>
-            <button className="p-2 transition-colors text-slate-400 hover:text-blue-600">
-              <Settings className="w-5 h-5" />
-            </button>
-          </div>
         </header>
 
         {/* Dynamic Content Scrollbox */}
@@ -126,7 +119,6 @@ function App() {
             <ActiveComponent />
           </div>
         </main>
-
       </div>
     </div>
   );

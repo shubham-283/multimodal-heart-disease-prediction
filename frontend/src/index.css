@@ -1,3 +1,45 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@media print {
+  html, body {
+    height: auto !important;
+    overflow: visible !important;
+  }
+
+  body {
+    background: white !important;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+
+  .print-container {
+    position: static !important;
+    height: auto !important;
+    overflow: visible !important;
+    padding: 20px !important;
+  }
+
+  .print-section {
+    page-break-inside: avoid;
+  }
+
+  img {
+    max-width: 100% !important;
+    height: auto !important;
+    page-break-inside: avoid;
+  }
+}
+
+.clip-low {
+  clip-path: polygon(0 100%, 0 0, 50% 0);
+}
+.clip-moderate {
+  clip-path: polygon(25% 100%, 50% 0, 75% 100%);
+}
+.clip-high {
+  clip-path: polygon(50% 0, 100% 0, 100% 100%);
+}
