@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Upload, Activity, Shield, AlertCircle, CheckCircle, Image as ImageIcon, Search, Zap } from 'lucide-react';
+import { saveReportSection } from "../../utils/reportStore";
+import { fileOrBlobToBase64 } from "../../utils/imageToBase64";
+import { AlertCircle, CheckCircle, Image as ImageIcon, Search } from 'lucide-react';
 
 const ArcadeStenosis = () => {
   const [selectedFile, setSelectedFile] = useState(null);
@@ -55,8 +57,15 @@ const ArcadeStenosis = () => {
       setMetrics({ detected, probability });
 
       const imageBlob = await response.blob();
-      setResultImage(URL.createObjectURL(imageBlob));
+      const base64Image = await fileOrBlobToBase64(imageBlob);
 
+      setResultImage(base64Image);
+
+      saveReportSection("stenosis", {
+        detected,
+        probability,
+        image: base64Image
+      });
     } catch (err) {
       setError(err.message);
     } finally {
@@ -64,27 +73,28 @@ const ArcadeStenosis = () => {
     }
   };
 
+
+
   return (
     <div className="min-h-screen p-6 font-sans bg-gray-50 text-slate-800 md:p-12">
       <div className="max-w-6xl mx-auto space-y-8">
-        
+
 
         <div className="grid grid-cols-1 gap-8 lg:grid-cols-12">
-          
+
           {/* Upload Section */}
           <section className="p-8 space-y-6 bg-white border border-gray-100 shadow-sm lg:col-span-5 rounded-3xl">
             <div className="flex items-center gap-3">
               <div className="w-1.5 h-6 bg-blue-600 rounded-full"></div>
               <h2 className="text-lg font-bold text-slate-900">Input Parameters</h2>
             </div>
-            
+
             <form onSubmit={handleSubmit} className="space-y-6">
-              <div 
-                className={`group relative border-2 border-dashed rounded-3xl p-10 text-center transition-all duration-300 ${
-                  previewUrl 
-                    ? 'border-blue-200 bg-blue-50/30' 
-                    : 'border-gray-200 bg-gray-50 hover:border-blue-400 hover:bg-white'
-                }`}
+              <div
+                className={`group relative border-2 border-dashed rounded-3xl p-10 text-center transition-all duration-300 ${previewUrl
+                  ? 'border-blue-200 bg-blue-50/30'
+                  : 'border-gray-200 bg-gray-50 hover:border-blue-400 hover:bg-white'
+                  }`}
               >
                 {previewUrl ? (
                   <div className="space-y-4">
@@ -102,10 +112,10 @@ const ArcadeStenosis = () => {
                     </div>
                   </div>
                 )}
-                <input 
-                  type="file" 
-                  onChange={handleFileChange} 
-                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" 
+                <input
+                  type="file"
+                  onChange={handleFileChange}
+                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                   accept="image/*"
                 />
               </div>
@@ -116,14 +126,13 @@ const ArcadeStenosis = () => {
                 </div>
               )}
 
-              <button 
-                type="submit" 
+              <button
+                type="submit"
                 disabled={loading || !selectedFile}
-                className={`w-full py-4 px-6 font-black tracking-widest text-white uppercase transition-all rounded-2xl flex items-center justify-center gap-3 ${
-                  loading 
-                    ? 'bg-slate-400 cursor-not-allowed' 
-                    : 'bg-slate-900 hover:bg-blue-600 active:scale-95 shadow-lg shadow-slate-200'
-                }`}
+                className={`w-full py-4 px-6 font-black tracking-widest text-white uppercase transition-all rounded-2xl flex items-center justify-center gap-3 ${loading
+                  ? 'bg-slate-400 cursor-not-allowed'
+                  : 'bg-slate-900 hover:bg-blue-600 active:scale-95 shadow-lg shadow-slate-200'
+                  }`}
               >
                 {loading ? (
                   <>
@@ -145,22 +154,18 @@ const ArcadeStenosis = () => {
               <div className="w-1.5 h-6 bg-emerald-500 rounded-full"></div>
               <h2 className="text-lg font-bold text-slate-900">Diagnostic Results</h2>
             </div>
-            
+
             {resultImage ? (
               <div className="flex-grow space-y-8 duration-500 animate-in fade-in slide-in-from-bottom-4">
                 <div className="relative overflow-hidden border border-gray-100 shadow-2xl group rounded-3xl">
                   <img src={resultImage} alt="Annotated Result" className="w-full h-auto" />
-                  <div className="absolute px-4 py-2 border shadow-sm top-4 right-4 bg-white/90 backdrop-blur-md border-white/20 rounded-2xl">
-                    <p className="text-[10px] font-black text-blue-600 uppercase tracking-tighter">AI Annotated Output</p>
-                  </div>
                 </div>
 
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                  <div className={`p-6 rounded-3xl border transition-all ${
-                    metrics.detected 
-                      ? 'bg-red-50 border-red-100' 
-                      : 'bg-emerald-50 border-emerald-100'
-                  }`}>
+                  <div className={`p-6 rounded-3xl border transition-all ${metrics.detected
+                    ? 'bg-red-50 border-red-100'
+                    : 'bg-emerald-50 border-emerald-100'
+                    }`}>
                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Condition Status</p>
                     <div className="flex items-center gap-3">
                       <p className={`text-2xl font-black ${metrics.detected ? 'text-red-600' : 'text-emerald-700'}`}>
@@ -173,7 +178,7 @@ const ArcadeStenosis = () => {
                       )}
                     </div>
                   </div>
-                  
+
                   <div className="p-6 border border-gray-100 bg-gray-50 rounded-3xl">
                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Probability Index</p>
                     <div className="flex items-center gap-2">
@@ -181,8 +186,8 @@ const ArcadeStenosis = () => {
                         {(parseFloat(metrics.probability) * 100).toFixed(2)}%
                       </p>
                       <div className="flex-grow h-2 overflow-hidden bg-gray-200 rounded-full">
-                        <div 
-                          className="h-full transition-all duration-1000 bg-blue-600 rounded-full" 
+                        <div
+                          className="h-full transition-all duration-1000 bg-blue-600 rounded-full"
                           style={{ width: `${parseFloat(metrics.probability) * 100}%` }}
                         ></div>
                       </div>
@@ -210,10 +215,6 @@ const ArcadeStenosis = () => {
             )}
           </section>
         </div>
-        
-        <footer className="py-4 text-center">
-          <p className="text-[10px] text-gray-400 font-medium">ARCADE V2.0 // PROTECTED CLINICAL INTERFACE // 2026</p>
-        </footer>
       </div>
     </div>
   );
